@@ -10,7 +10,7 @@ class SimplePerceptron:
         self.input_size = input_size
         self.learning_rate = learning_rate
 
-    def limiar_function (self, input):
+    def _limiar_function (self, input):
         acc = 0
         for (x, w) in zip(input, self.weights):
             acc += x * w
@@ -18,12 +18,11 @@ class SimplePerceptron:
 
     def train (self, inputs, labels):
         loops_since_last_error = 0
-        cases = [{'input': i, 'label': l} for (i, l) in zip(inputs, labels)]
-        i = 0
+        cases = [{'input': i + [1], 'label': l} for (i, l) in zip(inputs , labels)]
+        age, i = 0, 0
 
-        while True:
-            shuffle(cases)
-            error = cases[i]['label'] - self.predict(cases[i]['input'])
+        while loops_since_last_error <= len(cases):
+            error = cases[i]['label'] - self._predict(cases[i]['input'])
 
             if error != 0:
                 loops_since_last_error = 0
@@ -31,44 +30,31 @@ class SimplePerceptron:
                     self.weights[j] += self.learning_rate * error * coordenate
             else:
                 loops_since_last_error += 1
-                if loops_since_last_error > len(cases):
-                    break
             
-            if i < len(cases) - 1:
-                i += 1
-            else:
-                i = 0
+            age += 1
+            i = age % len(cases)
+            if age == 0: shuffle(cases)
 
-    def predict (self, input):
-        return self.limiar_function(input) >= 0
+    def _predict (self, input):
+        return self._limiar_function(input) >= 0
 
-
-sp = SimplePerceptron(2, 0.5, 2, -2)
-# sp.weights = [1, 1, 1.5] # pesos para a AND
-
-possibilities = [[x, y] for x in range(2) for y in range(2)]
-expanded_p = [p + [-1] for p in possibilities]
+    def predict (self, input): 
+        return self._predict(input + [1])
 
 
-print("==========================")
 
-sp.train(expanded_p, [False, False, False, True])
+def test_train_and_predict(training_payload):
+    possibilities = [[x, y] for x in range(2) for y in range(2)]
+    sp = SimplePerceptron(2, 0.5, 2, -2)
 
-for (ep, p) in zip(expanded_p, possibilities): 
-    print(p, "=> ", sp.predict (ep))
-    
-print("==========================")
-    
-sp.train(expanded_p, [False, True, True, True])
+    sp.train(possibilities, training_payload)
 
-for (ep, p) in zip(expanded_p, possibilities): 
-    print(p, "=> ", sp.predict (ep))
-    
-print("==========================")
-    
-sp.train(expanded_p, [False, True, False, True])
+    print("==========================")
+    for p in possibilities: 
+        print(p, "=> ", sp.predict (p))
+    print("==========================")
 
-for (ep, p) in zip(expanded_p, possibilities): 
-    print(p, "=> ", sp.predict (ep))
-    
-print("==========================")
+
+test_train_and_predict([False, False, False, True])
+test_train_and_predict([False, True, True, True])
+test_train_and_predict([False, True, False, True])
