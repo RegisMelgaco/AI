@@ -1,4 +1,4 @@
-from random import randint
+from random import randint, shuffle
 from functools import reduce
 
 
@@ -18,21 +18,23 @@ class SimplePerceptron:
 
     def train (self, inputs, labels):
         loops_since_last_error = 0
+        cases = [{'input': i, 'label': l} for (i, l) in zip(inputs, labels)]
         i = 0
 
         while True:
-            error = labels[i].numerator - self.predict(inputs[i]).numerator
+            shuffle(cases)
+            error = cases[i]['label'] - self.predict(cases[i]['input'])
 
             if error != 0:
                 loops_since_last_error = 0
-                for (j, coordenate) in enumerate(inputs[i]):
+                for (j, coordenate) in enumerate(cases[i]['input']):
                     self.weights[j] += self.learning_rate * error * coordenate
             else:
                 loops_since_last_error += 1
-                if loops_since_last_error > len(labels):
+                if loops_since_last_error > len(cases):
                     break
             
-            if i < len(labels) - 1:
+            if i < len(cases) - 1:
                 i += 1
             else:
                 i = 0
@@ -42,12 +44,31 @@ class SimplePerceptron:
 
 
 sp = SimplePerceptron(2, 0.5, 2, -2)
-# sp.weights = [1, 1, 1.5]
+# sp.weights = [1, 1, 1.5] # pesos para a AND
 
 possibilities = [[x, y] for x in range(2) for y in range(2)]
 expanded_p = [p + [-1] for p in possibilities]
 
+
+print("==========================")
+
 sp.train(expanded_p, [False, False, False, True])
 
-for p in expanded_p: 
-    print(p, "=> ", sp.predict (p))
+for (ep, p) in zip(expanded_p, possibilities): 
+    print(p, "=> ", sp.predict (ep))
+    
+print("==========================")
+    
+sp.train(expanded_p, [False, True, True, True])
+
+for (ep, p) in zip(expanded_p, possibilities): 
+    print(p, "=> ", sp.predict (ep))
+    
+print("==========================")
+    
+sp.train(expanded_p, [False, True, False, True])
+
+for (ep, p) in zip(expanded_p, possibilities): 
+    print(p, "=> ", sp.predict (ep))
+    
+print("==========================")
