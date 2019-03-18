@@ -5,20 +5,38 @@ from functools import reduce
 class PerceptronNeuron:
 
     def __init__ (self, input_size, learning_rate, initial_max_weight, initial_min_weight, max_age = 10000):
-        self.weights = [randint (initial_min_weight, initial_max_weight) for i in range(input_size + 1)]
+        self.weights = self.gen_weights(input_size, initial_min_weight, initial_max_weight)
+        self.bias = self.gen_bias(initial_min_weight, initial_max_weight)
         self.input_size = input_size
         self.learning_rate = learning_rate
         self.age, self.max_age = 0, max_age
 
-    def insure_bias_input(self, input):
-        return input[:] if len(input) == self.input_size + 1 else input + [1]
+    def gen_weights(self, input_size, min_weight, max_weight):
+        weights = []
+        for i in range(1, input_size+1):
+            weights.append([randint (min_weight, max_weight) for j in range(i)]) 
+        return weights
+
+    def gen_bias(self, min_weight, max_weight):
+        return randint (min_weight, max_weight)
 
     def activation (self, input):
-        input = self.insure_bias_input(input)
-        acc = 0
-        for (x, w) in zip(input, self.weights):
-            acc += x * w
+        acc = self.bias
+        for (row, w_row) in enumerate(self.weights):
+            for (col, weight) in enumerate(w_row):
+                acc += weight * input[row] if row == col else weight * input[row] * input[col]
         return acc
+
+    def update_weights(self, input, error):
+        for row in range(len(self.weights)):
+            for col in range(len(self.weights[row])):
+                if row == col:
+                    self.weights[row][col] += input[row] * error * self.learning_rate
+                else:
+                    self.weights[row][col] += input[row] * input[col] * error * self.learning_rate
+
+    def update_bias(self, error):
+        self.bias += self.learning_rate * error
 
     def fit (self, inputs, labels):
         loops_since_last_error = 0
@@ -31,6 +49,7 @@ class PerceptronNeuron:
             if error != 0:
                 loops_since_last_error = 0
                 self.update_weights(cases[i]['input'], error)
+                self.update_bias(error)
             else:
                 loops_since_last_error += 1
             
@@ -38,9 +57,23 @@ class PerceptronNeuron:
             i = self.age % len(cases)
             if self.age == 0: shuffle(cases)
 
-    def update_weights(self, input, error):
-        for (j, coordenate) in enumerate(input):
-            self.weights[j] += self.learning_rate * error * coordenate
-
     def predict (self, input):
         return 1.0 if self.activation(input) >= 0.0 else 0.0
+
+
+pn = PerceptronNeuron(2, 0.5, 2, -2, 1000)
+
+for row in pn.weights:
+    print(row)
+
+inputs = [[x1, x2] for x1 in range(2) for x2 in range(2)]
+labels = [0,1,1,0]
+
+for (input, label) in zip(inputs, labels):
+    print(input, "->", label)
+
+pn.fit(inputs, labels)
+
+print("=== test ===")
+for input in inputs:
+    print(input, "->", pn.predict(input))
