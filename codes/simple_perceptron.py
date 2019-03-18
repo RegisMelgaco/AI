@@ -59,21 +59,3 @@ class PerceptronNeuron:
 
     def predict (self, input):
         return 1.0 if self.activation(input) >= 0.0 else 0.0
-
-
-pn = PerceptronNeuron(2, 0.5, 2, -2, 1000)
-
-for row in pn.weights:
-    print(row)
-
-inputs = [[x1, x2] for x1 in range(2) for x2 in range(2)]
-labels = [0,1,1,0]
-
-for (input, label) in zip(inputs, labels):
-    print(input, "->", label)
-
-pn.fit(inputs, labels)
-
-print("=== test ===")
-for input in inputs:
-    print(input, "->", pn.predict(input))
