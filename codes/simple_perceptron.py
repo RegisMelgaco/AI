@@ -44,6 +44,10 @@ class PerceptronNeuron:
         self.age, i = 0, 0
 
         while loops_since_last_error < len(cases) and self.max_age >= self.age:
+            if i == 0:
+                loops_since_last_error = 0
+                shuffle(cases)
+
             error = cases[i]['label'] - self.predict(cases[i]['input'])
 
             if error != 0:
@@ -55,7 +59,6 @@ class PerceptronNeuron:
             
             self.age += 1
             i = self.age % len(cases)
-            if self.age == 0: shuffle(cases)
 
     def predict (self, input):
         return 1.0 if self.activation(input) >= 0.0 else 0.0

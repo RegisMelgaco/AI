@@ -58,6 +58,11 @@ class SimplePerceptron {
         var loopsSinceLastError = 0
         age = 0
         while (loopsSinceLastError <= cases.count && age < maxAge) {
+            if (i == 0) {
+                cases = cases.shuffled()
+                loopsSinceLastError = 0
+            }
+            
             error = cases[i].label - predict(input: cases[i].input)
             
             if (error != 0.0) {
