@@ -2,60 +2,50 @@ import csv
 from codes.simple_perceptron import PerceptronNeuron
 from functools import reduce
 from random import shuffle
+from sklearn.metrics import confusion_matrix
+import pandas as pd
+import matplotlib.pyplot as plt
 
+
+# last col must be the label
+def prepare_dataset_data(dataset, training_size_percentage = 0.8):
+    divisor = round(training_size_percentage * len(dataset))
+    trainig_dataset = dataset[:divisor]
+    test_dataset = dataset[divisor:]
+    
+    trainig_dataset_inputs = reduce(lambda acc, case: acc + [case[:-1]], trainig_dataset, [])
+    test_dataset_inputs = reduce(lambda acc, case: acc + [case[:-1]], test_dataset, [])
+    trainig_dataset_labels = reduce(lambda acc, case: acc + [case[-1]], trainig_dataset, [])
+    test_dataset_labels = reduce(lambda acc, case: acc + [case[-1]], test_dataset, [])
+
+    return (trainig_dataset_inputs, test_dataset_inputs, trainig_dataset_labels, test_dataset_labels)
 
 with open("datasets/iris.csv", newline="\n") as csvfile:
-    irirs_dataset = reduce(lambda acc, case: acc + [case], csv.reader(csvfile, delimiter = ","), [])
-    shuffle(irirs_dataset)
-    dataset_input = []
-    dataset_labels = {"setosa": [], "versicolor": [], "virginica": []}
+    untreated_irirs_dataset = reduce(lambda acc, case: acc + [case], csv.reader(csvfile, delimiter = ","), [])
+    iris_dataset = list(map(lambda row: row[:-1]+[1] if row[-1] == "Iris-setosa" else row[:-1]+[0], untreated_irirs_dataset))
+    iris_dataset = [list(map(float, row)) for row in iris_dataset]
+    confusion_matrix_history = []
+    test_dataset_labels_len = 0
+    num_of_tests = 100
 
-    for [sepal_length, sepal_width, petal_length, petal_width, spicie] in irirs_dataset:
-        dataset_input.append(list(map(float, [sepal_length, sepal_width, petal_length, petal_width])))
+    for i in range(num_of_tests):
+        shuffle(iris_dataset)
+        (trainig_dataset_inputs, test_dataset_inputs, trainig_dataset_labels, test_dataset_labels) = prepare_dataset_data(iris_dataset)
 
-        dataset_labels["setosa"].append(1 if spicie == "Iris-setosa" else 0)
-        dataset_labels["versicolor"].append(1 if spicie == "Iris-versicolor" else 0)
-        dataset_labels["virginica"].append(1 if spicie == "Iris-virginica" else 0)
+        test_dataset_labels_len = len(test_dataset_labels)
 
-    dataset_input_size = len(dataset_input[0])
-    dataset_size = len(dataset_input)
+        neuron = PerceptronNeuron(len(trainig_dataset_inputs[0]), 0.0001, 10, -10, 100000)
+        neuron.fit(trainig_dataset_inputs, trainig_dataset_labels)
+        predictions = [neuron.predict(input) for input in test_dataset_inputs]
+        confusion_matrix_history.append(confusion_matrix(test_dataset_labels, predictions))
 
-    test_dataset_input = dataset_input[int(dataset_size*0.2):]
-    test_dataset_labels = {"setosa": dataset_labels["setosa"][int(dataset_size*0.2):],
-                           "versicolor": dataset_labels["versicolor"][int(dataset_size*0.2):],
-                           "virginica": dataset_labels["virginica"][int(dataset_size*0.2):]}
+    matrix_diagonal = lambda matrix: [matrix[i][i] for i in range(len(matrix))]
+    calc_accuracy = lambda confusion_matrix, cases_count: sum(matrix_diagonal(confusion_matrix))/cases_count
 
-    trainig_dataset_input = dataset_input[:int(dataset_size*0.8)]
-    trainig_dataset_labels = {"setosa": dataset_labels["setosa"][:int(dataset_size*0.8)],
-                              "versicolor": dataset_labels["versicolor"][:int(dataset_size*0.8)],
-                              "virginica": dataset_labels["virginica"][:int(dataset_size*0.8)]}
+    accuracy_history = [calc_accuracy(cm, test_dataset_labels_len) for cm in confusion_matrix_history]
+    average_accurace = sum(accuracy_history) / len(accuracy_history)
+    standard_deviation = reduce(lambda acc, accuracy: acc + abs(average_accurace-accuracy), accuracy_history, 0)/len(accuracy_history)
 
-    neurons = {"setosa": PerceptronNeuron(dataset_input_size, 0.001, 10, -10, 1000000),
-               "versicolor": PerceptronNeuron(dataset_input_size, 0.001, 10, -10, 1000000),
-               "virginica": PerceptronNeuron(dataset_input_size, 0.001, 10, -10, 1000000)}
-
-    neurons["setosa"].fit(trainig_dataset_input, trainig_dataset_labels["setosa"])
-    neurons["versicolor"].fit(trainig_dataset_input, trainig_dataset_labels["versicolor"])
-    neurons["virginica"].fit(trainig_dataset_input, trainig_dataset_labels["virginica"])
-
-
-    correct_cases = 0
-    for (input, label) in zip(test_dataset_input, test_dataset_labels["setosa"]):
-        correct_cases += 1 if label == neurons["setosa"].predict(input) else 0
-
-    print("taxa de acerto:", correct_cases/len(test_dataset_input))
-    print("contagem de eras:", neurons["setosa"].age)
-
-    correct_cases = 0
-    for (input, label) in zip(test_dataset_input, test_dataset_labels["versicolor"]):
-        correct_cases += 1 if label == neurons["versicolor"].predict(input) else 0
-
-    print("taxa de acerto:", correct_cases/len(test_dataset_input))
-    print("contagem de eras:", neurons["versicolor"].age)
-
-    correct_cases = 0
-    for (input, label) in zip(test_dataset_input, test_dataset_labels["virginica"]):
-        correct_cases += 1 if label == neurons["virginica"].predict(input) else 0
-
-    print("taxa de acerto:", correct_cases/len(test_dataset_input))
-    print("contagem de eras:", neurons["virginica"].age)
+    print("number of confusion matrixes:", len(confusion_matrix_history))
+    print("average accurace:", average_accurace)
+    print("standard deviation", standard_deviation)
