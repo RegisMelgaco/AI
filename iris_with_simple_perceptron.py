@@ -1,17 +1,17 @@
 import csv
-from codes.simple_perceptron import PerceptronNeuron
 from functools import reduce
 from random import shuffle
+
 from sklearn.metrics import confusion_matrix
-import pandas as pd
-import matplotlib.pyplot as plt
+
+from codes.simple_perceptron import PerceptronNeuron
 
 
 # last col must be the label
 def prepare_dataset_data(dataset, training_size_percentage = 0.8):
-    divisor = round(training_size_percentage * len(dataset))
-    trainig_dataset = dataset[:divisor]
-    test_dataset = dataset[divisor:]
+    dataset_divisor = round(training_size_percentage * len(dataset))
+    trainig_dataset = dataset[:dataset_divisor]
+    test_dataset = dataset[dataset_divisor:]
     
     trainig_dataset_inputs = reduce(lambda acc, case: acc + [case[:-1]], trainig_dataset, [])
     test_dataset_inputs = reduce(lambda acc, case: acc + [case[:-1]], test_dataset, [])
@@ -26,11 +26,11 @@ with open("datasets/iris.csv", newline="\n") as csvfile:
     iris_dataset = [list(map(float, row)) for row in iris_dataset]
     confusion_matrix_history = []
     test_dataset_labels_len = 0
-    num_of_tests = 100
+    num_of_tests = 1000
 
     for i in range(num_of_tests):
         shuffle(iris_dataset)
-        (trainig_dataset_inputs, test_dataset_inputs, trainig_dataset_labels, test_dataset_labels) = prepare_dataset_data(iris_dataset)
+        (trainig_dataset_inputs,test_dataset_inputs, trainig_dataset_labels, test_dataset_labels) = prepare_dataset_data(iris_dataset)
 
         test_dataset_labels_len = len(test_dataset_labels)
 
@@ -48,4 +48,4 @@ with open("datasets/iris.csv", newline="\n") as csvfile:
 
     print("number of confusion matrixes:", len(confusion_matrix_history))
     print("average accurace:", average_accurace)
-    print("standard deviation", standard_deviation)
+    print("standard deviation:", standard_deviation)
