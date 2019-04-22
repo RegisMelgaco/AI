@@ -1,4 +1,4 @@
-from random import randint, shuffle
+from random import uniform, shuffle
 from functools import reduce
 
 
@@ -14,11 +14,11 @@ class PerceptronNeuron:
     def gen_weights(self, input_size, min_weight, max_weight):
         weights = []
         for i in range(1, input_size+1):
-            weights.append([randint (min_weight, max_weight) for j in range(i)]) 
+            weights.append([uniform (min_weight, max_weight) for j in range(i)]) 
         return weights
 
     def gen_bias(self, min_weight, max_weight):
-        return randint (min_weight, max_weight)
+        return uniform (min_weight, max_weight)
 
     def activation (self, input):
         acc = self.bias
